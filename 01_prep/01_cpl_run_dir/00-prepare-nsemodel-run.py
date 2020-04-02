@@ -1,7 +1,6 @@
 
-
 __author__ = "Saeed Moghimi"
-__copyright__ = "Copyright 2017, NOAA"
+__copyright__ = "Copyright 2019, NOAA"
 __license__ = "GPL"
 __version__ = "1.1"
 __email__ = "moghimis@gmail.com"
@@ -14,9 +13,7 @@ Dependency:  * Cheeta python template module
              * Numpy, and other python scientific packages ... 
 
 """
-# TODO: severe problem with wave and atmospher land points
-# TODO: WW3 date changes !???
-# TODO: copy input files to run dir too !??
+
 
 import numpy as np
 import os,sys
@@ -166,6 +163,9 @@ def prep_adc(run_dir):
     txt1 = comm0 + comm2
     logf(txt1,log_file) 
     os.system(comm0 + comm2)
+    
+    txt1 = ' > End of Preproc.x ...  '
+    logf(txt1,log_file) 
     
     # Treat hotfile
     try:
@@ -325,8 +325,10 @@ def prep_nems(run_dir):
         #
         wav_inp_file    = os.path.join(base_info.app_inp_dir,base_info.wav_inp_dir,base_info.wav_netcdf_file_name)
         wav_rundir_file = os.path.join(wav_dir,base_info.wav_netcdf_file_name)
-        if False:
-            print '  > Link Wave Inp ...'
+        if True:
+            txt1 =  '  > Link Wave Inp ...'
+            logf(txt1,log_file)             
+            
             os.system ('mkdir -p  ' +  wav_dir                                   )
             os.system ('ln    -sf ' +  wav_inp_file + ' ' + wav_rundir_file      )
         else:        
@@ -344,8 +346,10 @@ def prep_nems(run_dir):
         #
         atm_inp_file    = os.path.join(base_info.app_inp_dir,base_info.atm_inp_dir,base_info.atm_netcdf_file_name)
         atm_rundir_file = os.path.join(atm_dir,base_info.atm_netcdf_file_name)
-        if False:
-            print '  > Link ATM Inp ...'
+        if True:
+            txt1 =  '  > Link ATM Inp ...'
+            logf(txt1,log_file)             
+            
             os.system ('mkdir -p  ' +  atm_dir                                   )
             os.system ('ln    -sf ' +  atm_inp_file + ' ' + atm_rundir_file      )
         else:
@@ -360,7 +364,7 @@ def prep_nems(run_dir):
     logf(txt1,log_file)   
     
     #prepare run scr
-    qsub       = os.path.join(run_dir,'qsub.sh')
+    qsub       = os.path.join(run_dir,'slurm.sh')
     #
     dr={}
     dr.update({'modfile'  :modfile   })
@@ -368,9 +372,11 @@ def prep_nems(run_dir):
     dr.update({'WallTime' :base_info.WallTime      })
     dr.update({'Queue'    :base_info.Queue         })
     dr.update({'RunName'  :(base_info.RunName+base_info.Ver) })
-    tmp2scr(filename=qsub ,tmpname='qsub.template',d=dr)
-    os.system('cp -fr   qsub.template    '   +run_dir+'/scr/')
-    os.system('cp -fr   run*.sh          '   +run_dir)
+    #tmp2scr(filename=qsub ,tmpname='qsub.template',d=dr)
+    tmp2scr(filename=qsub ,tmpname=base_info.qsub_tempelate,d=dr)
+    
+    os.system('cp -fr '+ base_info.qsub_tempelate +' ' +run_dir+'/scr/')
+    os.system('cp -fr   run*.sh           '            +run_dir)
 
 def get_tidal_fact(run_dir):
     """
@@ -552,23 +558,21 @@ def main0():
 
 def one_run_eq(run_scr):
     run_dir =  get_run_dir()
-    os.system('echo "cd  ' + run_dir +'" >> ' + run_scr )
-    os.system('echo "qsub qsub.sh      " >> ' + run_scr )
-
+    os.system('echo "cd  ' + run_dir +' " >> ' + run_scr )
+    #os.system('echo "qsub qsub.sh      " >> ' + run_scr )
+    os.system('echo "sbatch slurm.sh    " >> ' + run_scr )
+    #
     prep_nems(run_dir)
-    if False:
+    prep_adc(run_dir)
+    if True:
         plot_domain_decomp(run_dir)
         back_up_codes(run_dir)
-    prep_adc(run_dir)
-    
-
 
 def main():
     """
     Main loop
     
     """  
-  
     txt1 = ' > Spin-up Start Time:   '   + base_info.tide_spin_start_date.isoformat()
     logf(txt1,log_file)   
  

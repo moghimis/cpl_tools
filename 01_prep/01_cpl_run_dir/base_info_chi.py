@@ -3,6 +3,11 @@ Config file for NSEModel run generator
 
 All filenames relative to main directories
 
+CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK  Config file
+CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK  Config file
+CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK CHINNECOCK  Config file
+
+
 """
 
 __author__ = 'Saeed Moghimi'
@@ -11,30 +16,36 @@ __license__ = 'GPL'
 __version__ = '1.1'
 __email__ = 'moghimis@gmail.com'
 
+
 import numpy as np
 import os,sys
 import datetime
 
-
 #######################
 ### Input data here ###
 #qsub information
-WallTime   = '02:30:00'                  # Maximize scheduling through HH:MM:SS
+WallTime   = '00:30:00'                  # Maximize scheduling through HH:MM:SS
 Queue      = 'batch'                     # 'batch' 'debug'
 #-----------------------------------
 # Choose options by commenting out
 
 avail_options = [
-    'tide_spinup' ,
-    'atm2ocn'     ,
-    'wav2ocn'     ,
-    'atm&wav2ocn' ,    
+    'tide_spinup',
+    'tide_baserun',
+    'best_track2ocn',
+    'wav&best_track2ocn',
+    'atm2ocn',
+    'wav2ocn',
+    'atm&wav2ocn',    
     ]
 
 #Choose one option based on avail_options 
-#run_option  = 'tide_spinup'
-#run_option = 'atm2ocn'
-#run_option = 'wav2ocn'
+#run_option = 'tide_spinup'
+#run_option = 'tide_baserun'
+#run_option = 'best_track2ocn'
+#run_option = 'wav&best_track2ocn'
+#run_option  = 'atm2ocn'
+#run_option = 'wav2ocn'    ####>>>> Not supported. Best is to get diff of atm&wav2ocn and atm2ocn to see the wave effects
 run_option = 'atm&wav2ocn'
 #----------------------------------
 #Date settings
@@ -44,13 +55,15 @@ wave_spin_end_date   = tide_spin_start_date + datetime.timedelta(days=27)
 #final_end_date      = tide_spin_start_date + datetime.timedelta(days=23.5)
 
 # Folders
-main_run_dir    = '/scratch4/COASTAL/coastal/scrub/Saeed.Moghimi/stmp1/'   # IKE test cases
-application_dir = '/scratch4/COASTAL/coastal/save/Saeed.Moghimi/models/NEMS/tests/NSEModel_try_err_branches/HWRF2ADC_test02/'
-app_inp_dir     = '/scratch4/COASTAL/coastal/save/Saeed.Moghimi/models/NEMS/NEMS_inps/nsemodel_inps/'
+main_run_dir    = '/scratch2/COASTAL/coastal/noscrub/Saeed.Moghimi/01_stmp_ca/stmp1-chi_nems_v2/'   # florence test cases
+application_dir = '/scratch2/COASTAL/coastal/save/Saeed.Moghimi/models/NEMS/tests/new_nems_app/ADC-NEMS-APP-V2/'
+app_inp_dir     = '/scratch2/COASTAL/coastal/save/Saeed.Moghimi/models/NEMS/NEMS_inps/nsemodel_inps/'
 
 # modules inp dirs
-grd_inp_dir = 'chinnecock_grid_v2/'                             #relative to  $app_inp_dir/
-ocn_inp_dir = 'chinnecock_forcing_v2/inp_adcirc/'          #relative to  $app_inp_dir/
+grd_inp_dir = 'chinnecock_grid_v2/'                         #relative to  $app_inp_dir/
+ocn_inp_dir = 'chinnecock_forcing_v2/inp_adcirc/'           #relative to  $app_inp_dir/
+
+
 atm_inp_dir = 'chinnecock_forcing_v2/inp_atmesh/'           #relative to  $app_inp_dir/
 wav_inp_dir = 'chinnecock_forcing_v2/inp_wavdata/'          #relative to  $app_inp_dir/
 
@@ -65,7 +78,7 @@ wav_netcdf_file_names = np.array([
 
 if run_option      == 'tide_spinup':    
     # To prepare a clod start ADCIRC-Only run for spining-up the tide 
-    Ver             = 'v1.1'
+    Ver             = 'v10.0'
     RunName         = 'a10_CHI_OCN_SPINUP'         # Goes to qsub job name
     #inp files
     fetch_hot_from  = None
@@ -77,15 +90,15 @@ if run_option      == 'tide_spinup':
     dt              = 2.0     
     ndays           = (end_date - start_date).total_seconds() / 86400.  #duration in days
     #fort15 options
-    ndays_ramp      = 5
+    ndays_ramp      = 7
     nws             = 0        #no wave no atm    Deprecated
     ihot            = 0        #no hot start
     hot_ndt_out     = ndays * 86400 / dt
 elif run_option    == 'tide_baserun':    
-    Ver             = 'v1.1' 
+    Ver             = 'v2.0-test' 
     RunName         = 'a20_CHI_TIDE'           # Goes to qsub job name
     #inp files
-    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v1.1/rt_20171205_h13_m12_s25r580'
+    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v10.0/rt_20180531_h13_m01_s30r830'
     fort15_temp     = 'fort.15.template.tide_spinup'           
     # Time
     start_date      = tide_spin_start_date  #current time is set by hotfile therefore we should use the same start time as 1st spinup
@@ -95,7 +108,7 @@ elif run_option    == 'tide_baserun':
     dt              = 2.0    
     ndays           = (end_date - start_date).total_seconds() / 86400.  #duration in days
     #fort15 options
-    ndays_ramp      = 5.0
+    ndays_ramp      = 7.0
     nws             = 0        # atm  Deprecated
     ihot            = 567
     hot_ndt_out     = ndays * 86400 / dt    
@@ -103,7 +116,7 @@ elif run_option    == 'best_track2ocn':
     Ver             = 'v1.1' 
     RunName         = 'a30_CHI_BEST'           # Goes to qsub job name
     #inp files
-    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v1.1/rt_20171205_h13_m12_s25r580'
+    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v10.0/rt_20180531_h13_m01_s30r830'
     fort15_temp     = 'fort.15.template.atm2ocn'           
     # Time
     start_date      = tide_spin_start_date  #current time is set by hotfile therefore we should use the same start time as 1st spinup
@@ -113,16 +126,16 @@ elif run_option    == 'best_track2ocn':
     dt              = 2.0    
     ndays           = (end_date - start_date).total_seconds() / 86400.  #duration in days
     #fort15 options
-    ndays_ramp      = 5.0
+    ndays_ramp      = 7.0
     nws             = 20        # atm  Deprecated
     ihot            = 567
     hot_ndt_out     = ndays * 86400 / dt    
 elif run_option    == 'wav&best_track2ocn':    
-    Ver             = 'v1.1' 
+    Ver             = 'v2.0' 
     RunName         = 'a40_CHI_WAV2BEST'            # Goes to qsub job name
     #inp files
     fort15_temp     = 'fort.15.template.atm2ocn'           
-    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v1.1/rt_20171205_h13_m12_s25r580'
+    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v10.0/rt_20180531_h13_m01_s30r830'
     # Time
     start_date      = tide_spin_start_date  #current time is set by hotfile therefore we should use the same start time as 1st spinup
     start_date_nems = tide_spin_end_date
@@ -131,15 +144,15 @@ elif run_option    == 'wav&best_track2ocn':
     dt              = 2.0   #######2.0    
     ndays           = (end_date - start_date).total_seconds() / 86400.  #duration in days
     #fort15 options
-    ndays_ramp      = 5.0
+    ndays_ramp      = 7.0
     nws             = 520    
     ihot            = 567
     hot_ndt_out     = ndays * 86400 / dt    
 elif run_option    == 'atm2ocn':    
-    Ver             = 'v1.1' 
+    Ver             = 'v2.0' 
     RunName         = 'a50_CHI_ATM2OCN'           # Goes to qsub job name
     #inp files
-    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v1.1/rt_20171205_h13_m12_s25r580'
+    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v10.0/rt_20180531_h13_m01_s30r830'
     fort15_temp     = 'fort.15.template.atm2ocn'           
     # Time
     start_date      = tide_spin_start_date  #current time is set by hotfile therefore we should use the same start time as 1st spinup
@@ -149,16 +162,16 @@ elif run_option    == 'atm2ocn':
     dt              = 2.0    
     ndays           = (end_date - start_date).total_seconds() / 86400.  #duration in days
     #fort15 options
-    ndays_ramp      = 5.0
+    ndays_ramp      = 7.0
     nws             = 17       # atm  Deprecated
     ihot            = 567
     hot_ndt_out     = ndays * 86400 / dt    
 elif run_option    == 'wav2ocn':    
-    Ver             = 'v1.1' 
+    Ver             = 'v10.0'
     RunName         = 'a60_CHI_WAV2OCN'            # Goes to qsub job name
     #inp files
     fort15_temp     = 'fort.15.template.atm2ocn'           
-    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v1.1/rt_20171205_h13_m12_s25r580'
+    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v10.0/rt_20180531_h13_m01_s30r830'
     # Time
     start_date      = tide_spin_start_date  #current time is set by hotfile therefore we should use the same start time as 1st spinup
     start_date_nems = tide_spin_end_date
@@ -167,16 +180,16 @@ elif run_option    == 'wav2ocn':
     dt              = 2.0   #######2.0    
     ndays           = (end_date - start_date).total_seconds() / 86400.  #duration in days
     #fort15 options
-    ndays_ramp      = 5.0
+    ndays_ramp      = 7.0
     nws             = 500       # atm  Deprecated
     ihot            = 567
     hot_ndt_out     = ndays * 86400 / dt    
 elif run_option    == 'atm&wav2ocn':    
-    Ver             = 'v1.1' 
+    Ver             = 'v2.0' 
     RunName         = 'a70_CHI_ATM_WAV2OCN'            # Goes to qsub job name
     #inp files
     fort15_temp     = 'fort.15.template.atm2ocn'           
-    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v1.1/rt_20171205_h13_m12_s25r580'
+    fetch_hot_from  = main_run_dir + '/a10_CHI_OCN_SPINUP_v10.0/rt_20180531_h13_m01_s30r830'
     #Time
     start_date      = tide_spin_start_date  #current time is set by hotfile therefore we should use the same start time as 1st spinup
     start_date_nems = tide_spin_end_date
@@ -184,7 +197,7 @@ elif run_option    == 'atm&wav2ocn':
     dt              = 2.0   #######2.0    
     ndays           = (end_date - start_date).total_seconds() / 86400.  #duration in days
     #fort15 options
-    ndays_ramp      = 5.0
+    ndays_ramp      = 7.0
     nws             = 517       # atm  Deprecated
     ihot            = 567
     hot_ndt_out     = ndays * 86400 / dt    
@@ -264,8 +277,9 @@ if nws > 0 :
 
 
 # relative to $application_dir/
-module_file     = 'modulefiles/theia/fv3-saeed'
-
+#module_file     = 'modulefiles/theia/fv3-saeed'
+module_file     = 'modulefiles/hera/ESMF_NUOPC'
+qsub_tempelate  = 'slurm.hera.template'
 # Templates
 qsub            = 'qsub.template' 
 model_configure = 'atm_namelist.rc.template'
